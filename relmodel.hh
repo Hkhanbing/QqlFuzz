@@ -34,21 +34,21 @@ struct sqltype {
   virtual bool consistent(struct sqltype *rvalue);
 };
 
-struct column {
+struct column { // 一个column由name和type构成
   string name;
   sqltype *type;
-  column(string name) : name(name) { }
+  column(string name) : name(name) { } // 构造函数 方便初始化
   column(string name, sqltype *t) : name(name), type(t) {
     assert(t);
   }
 };
 
 struct relation {
-  vector<column> cols;
+  vector<column> cols; // relation
   virtual vector<column> &columns() { return cols; }
 };
 
-struct named_relation : relation {
+struct named_relation : relation { // 继承自relation
   string name;
   virtual string ident() { return name; }
   virtual ~named_relation() { }
@@ -58,15 +58,15 @@ struct named_relation : relation {
 struct aliased_relation : named_relation {
   relation *rel;
   virtual ~aliased_relation() { }
-  aliased_relation(string n, relation* r) : named_relation(n), rel(r) { }
+  aliased_relation(string n, relation* r) : named_relation(n), rel(r) { } // 构造函数
   virtual vector<column>& columns() { return rel->columns(); }
 };
 
 struct table : named_relation {
-  string schema;
+  string schema; // 模式
   bool is_insertable;
   bool is_base_table;
-  vector<string> constraints;
+  vector<string> constraints; // 约束条件
   table(string name, string schema, bool insertable, bool base_table)
     : named_relation(name),
       schema(schema),
@@ -76,7 +76,7 @@ struct table : named_relation {
   virtual ~table() { };
 };
 
-struct scope {
+struct scope { // 支持嵌套作用域 比如嵌套查询 视图
   struct scope *parent;
   /// available to table_ref productions
   vector<named_relation*> tables;
@@ -114,7 +114,7 @@ struct scope {
   }
 };
 
-struct op {
+struct op { // op
   string name;
   sqltype *left;
   sqltype *right;
@@ -124,12 +124,12 @@ struct op {
   op() { }
 };
 
-struct routine {
+struct routine { // 表示数据库中的存储过程或函数
   string specific_name;
-  string schema;
-  vector<sqltype *> argtypes;
-  sqltype *restype;
-  string name;
+  string schema; // 递归嵌套的语句
+  vector<sqltype *> argtypes; // 参数类型
+  sqltype *restype; // 返回值类型
+  string name; // 记录了函数名
   routine(string schema, string specific_name, sqltype* data_type, string name)
     : specific_name(specific_name), schema(schema), restype(data_type), name(name) {
     assert(data_type);

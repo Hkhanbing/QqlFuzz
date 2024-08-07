@@ -231,7 +231,7 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
     proc.argtypes.push_back(sqltype::get(#a));				\
     register_aggregate(proc);						\
   } while(0)
-
+  // 其实和函数差不多(
   AGG(avg, INTEGER, INTEGER);
   AGG(avg, REAL, REAL);
   AGG(count, INTEGER, REAL);
