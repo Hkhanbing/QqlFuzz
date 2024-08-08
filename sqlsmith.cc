@@ -137,9 +137,9 @@ int main(int argc, char *argv[])
 			schema->fill_scope(scope);
 
 			if (options.count("rng-state")) {
-			istringstream(options["rng-state"]) >> smith::rng;
+				istringstream(options["rng-state"]) >> smith::rng;
 			} else {
-			smith::rng.seed(options.count("seed") ? stoi(options["seed"]) : getpid());
+				smith::rng.seed(options.count("seed") ? stoi(options["seed"]) : getpid());
 			}
 
 			vector<shared_ptr<logger> > loggers;
@@ -147,22 +147,22 @@ int main(int argc, char *argv[])
 			loggers.push_back(make_shared<impedance_feedback>());
 
 			if (options.count("log-to"))
-			loggers.push_back(make_shared<pqxx_logger>(
-				options.count("sqlite") ? options["sqlite"] : options["target"],
-			options["log-to"], *schema));
+				loggers.push_back(make_shared<pqxx_logger>(
+					options.count("sqlite") ? options["sqlite"] : options["target"],
+				options["log-to"], *schema));
 
 			if (options.count("verbose")) {
-			auto l = make_shared<cerr_logger>();
-			global_cerr_logger = &*l;
-			loggers.push_back(l);
-			signal(SIGINT, cerr_log_handler);
+				auto l = make_shared<cerr_logger>();
+				global_cerr_logger = &*l;
+				loggers.push_back(l);
+				signal(SIGINT, cerr_log_handler);
 			}
 			
 			if (options.count("dump-all-graphs"))
-		loggers.push_back(make_shared<ast_logger>());
+				loggers.push_back(make_shared<ast_logger>());
 
 			if (options.count("dump-all-queries"))
-		loggers.push_back(make_shared<query_dumper>());
+				loggers.push_back(make_shared<query_dumper>());
 
 			if (options.count("dry-run")) {
 				while (1) {
