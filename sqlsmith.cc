@@ -74,7 +74,9 @@ std::atomic<bool> running(true);
 
 char buffer1[0x1000]; // for stdout
 char buffer2[0x1000]; // for stderr
-
+int outPipe[2]; // 标准输出管道
+int errPipe[2]; // 标准错误管道
+pthread_t outputThread, errorThread;
 // 线程函数：读取子进程的标准输出
 void* readOutputStream(void* arg) {
     int fd = *static_cast<int*>(arg);
@@ -192,8 +194,14 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	
+
 	try
 		{
+			// find attach DBMS ### need edit to adjust my DBMS
+
+			// 这里是在测试数据库可连接性
+
 			shared_ptr<schema> schema;
 			if (options.count("sqlite")) {
 			#ifdef HAVE_LIBSQLITE3
@@ -212,11 +220,13 @@ int main(int argc, char *argv[])
 			#endif
 			}
 			else
-			schema = make_shared<schema_pqxx>(options["target"], options.count("exclude-catalog"));
+				schema = make_shared<schema_pqxx>(options["target"], options.count("exclude-catalog"));
+
+			// find attach DBMS end ###
 
 			scope scope;
 			long queries_generated = 0;
-			schema->fill_scope(scope);
+			schema->fill_scope(scope); // 填充生成词
 
 			if (options.count("rng-state")) {
 				istringstream(options["rng-state"]) >> smith::rng;
@@ -261,6 +271,7 @@ int main(int argc, char *argv[])
 				}
 			}
 
+			// dut is important 需要研究一下dut是什么
 			shared_ptr<dut_base> dut;
 			
 			if (options.count("sqlite")) {
@@ -280,17 +291,15 @@ int main(int argc, char *argv[])
 			#endif
 			}
 			else
-			dut = make_shared<dut_libpq>(options["target"]);
+				dut = make_shared<dut_libpq>(options["target"]);
 
 			
 			// my code1 injection ##
-			int outPipe[2]; // 标准输出管道
-    		int errPipe[2]; // 标准错误管道
+
 			if (pipe(outPipe) == -1 || pipe(errPipe) == -1) {
 				perror("pipe");
 				return 1;
 			}
-		    pthread_t outputThread, errorThread;
 			pthread_create(&outputThread, nullptr, readOutputStream, &outPipe[0]);
 			pthread_create(&errorThread, nullptr, readErrorStream, &errPipe[0]);
 
