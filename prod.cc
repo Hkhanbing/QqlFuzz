@@ -6,7 +6,7 @@
 #include "impedance.hh"
 
 prod::prod(struct prod *parent)
-  : pprod(parent)
+  : pprod(parent) // 构造函数
 {
     if (parent) {
       level = parent->level + 1;
@@ -17,7 +17,7 @@ prod::prod(struct prod *parent)
     }
 }
 
-void prod::indent(std::ostream &out)
+void prod::indent(std::ostream &out) // 用来输出的
 {
   out << std::endl;
   for (int i = 0; i < level; i++)
