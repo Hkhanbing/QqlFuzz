@@ -52,23 +52,23 @@ struct schema {
   }
   void fill_scope(struct scope &s) {
     for (auto &t : tables)
-      s.tables.push_back(&t);
+      s.tables.push_back(&t); // 将所有table转移到scope里面
     s.schema = this;
   }
   virtual void register_operator(op& o) {
     operators.push_back(o);
     typekey t(o.left, o.right, o.result);
-    index.insert(std::pair<typekey,op>(t,o));
+    index.insert(std::pair<typekey,op>(t,o)); // 存储到map里了 我觉得这里设置的规则是左右以及返回值的格式
   }
   virtual void register_routine(routine& r) {
-    routines.push_back(r);
+    routines.push_back(r); // 存储routine
   }
   virtual void register_aggregate(routine& r) {
-    aggregates.push_back(r);
+    aggregates.push_back(r); // aggregates是什么 -> 聚合函数
   }
   virtual op_iterator find_operator(sqltype *left, sqltype *right, sqltype *res) {
-    typekey t(left, right, res);
-    auto cons = index.equal_range(t);
+    typekey t(left, right, res); 
+    auto cons = index.equal_range(t); // 这就在找所有符合关系的op了
     if (cons.first == cons.second)
       return index.end();
     else

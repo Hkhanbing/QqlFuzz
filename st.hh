@@ -1,9 +1,10 @@
 /// @file
-/// @brief schema and dut classes for SQLite 3
+/// @brief schema and dut classes for ShenTong database
 
-#ifndef SQLITE_HH
-#define SQLITE_HH
+#ifndef ST_HH
+#define ST_HH
 
+// 写个我自己的
 extern "C"  {
 #include <sqlite3.h>
 }
@@ -13,12 +14,12 @@ extern "C"  {
 #include "dut.hh"
 
 struct sqlite_connection {
-    sqlite3 *db;
-    char *zErrMsg = 0;
-    int rc;
-    void q(const char *query);
-    sqlite_connection(std::string &conninfo);
-    ~sqlite_connection();
+  sqlite3 *db;
+  char *zErrMsg = 0;
+  int rc;
+  void q(const char *query);
+  sqlite_connection(std::string &conninfo);
+  ~sqlite_connection();
 };
 
 struct schema_sqlite : schema, sqlite_connection {

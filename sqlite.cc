@@ -46,7 +46,7 @@ extern "C" int table_callback(void *arg, int argc, char **argv, char **azColName
   auto tables = (vector<table> *)arg;
   bool view = (string("view") == argv[0]);
   table tab(argv[2], "main", !view, !view);
-  tables->push_back(tab);
+  tables->push_back(tab); // 获取所有表
   return 0;
 }
 
@@ -55,7 +55,7 @@ extern "C" int column_callback(void *arg, int argc, char **argv, char **azColNam
   (void) argc; (void) azColName;
   table *tab = (table *)arg;
   column c(argv[1], sqltype::get(argv[2]));
-  tab->columns().push_back(c);
+  tab->columns().push_back(c); // 获取所有columns
   return 0;
 }
 
@@ -99,7 +99,7 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
 //   sqlite3_busy_handler(db, my_sqlite3_busy_handler, 0);
   cerr << "Loading tables...";
 
-  rc = sqlite3_exec(db, query.c_str(), table_callback, (void *)&tables, &zErrMsg);
+  rc = sqlite3_exec(db, query.c_str(), table_callback, (void *)&tables, &zErrMsg); // 注意有回调函数
   if (rc!=SQLITE_OK) {
     auto e = std::runtime_error(zErrMsg);
     sqlite3_free(zErrMsg);
@@ -110,7 +110,7 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
   {
 		// sqlite_master doesn't list itself, do it manually
 		table tab("sqlite_master", "main", false, false);
-		tables.push_back(tab);
+		tables.push_back(tab); // 导入一张表
   }
   
   cerr << "done." << endl;
@@ -120,7 +120,7 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
   for (auto t = tables.begin(); t != tables.end(); ++t) {
     string q("pragma table_info(");
     q += t->name;
-    q += ");";
+    q += ");"; // 这里是获取这个表中的columns的类型
 
     rc = sqlite3_exec(db, q.c_str(), column_callback, (void *)&*t, &zErrMsg);
     if (rc!=SQLITE_OK) {
@@ -134,7 +134,7 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
 
 #define BINOP(n,t) do {op o(#n,sqltype::get(#t),sqltype::get(#t),sqltype::get(#t)); register_operator(o); } while(0)
 
-  BINOP(||, TEXT);
+  BINOP(||, TEXT);  // 开始注册operator
   BINOP(*, INTEGER);
   BINOP(/, INTEGER);
 
@@ -185,7 +185,7 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
     proc.argtypes.push_back(sqltype::get(#c));				\
     register_routine(proc);						\
   } while(0)
-
+  // 开始注册function
   FUNC(last_insert_rowid, INTEGER);
   FUNC(random, INTEGER);
   FUNC(sqlite_source_id, TEXT);
@@ -225,13 +225,14 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
   FUNC3(substr, TEXT, TEXT, INTEGER, INTEGER);
   FUNC3(replace, TEXT, TEXT, TEXT, TEXT);
 
+  // 开始注册内聚函数
 
 #define AGG(n,r, a) do {						\
     routine proc("", "", sqltype::get(#r), #n);				\
     proc.argtypes.push_back(sqltype::get(#a));				\
     register_aggregate(proc);						\
   } while(0)
-  // 其实和函数差不多(
+  // 内聚函数
   AGG(avg, INTEGER, INTEGER);
   AGG(avg, REAL, REAL);
   AGG(count, INTEGER, REAL);
@@ -244,7 +245,7 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
   AGG(sum, INTEGER, INTEGER);
   AGG(total, REAL, INTEGER);
   AGG(total, REAL, REAL);
-
+// TODO 这里没看懂后面那几个 
   booltype = sqltype::get("INTEGER");
   inttype = sqltype::get("INTEGER");
 
@@ -253,7 +254,7 @@ schema_sqlite::schema_sqlite(std::string &conninfo, bool no_catalog)
 
   true_literal = "1";
   false_literal = "0";
-
+  // 这里疑似PG特有types才能进入 别的只会找base table
   generate_indexes();
   sqlite3_close(db);
   db = 0;
