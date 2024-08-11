@@ -39,12 +39,13 @@ struct pg_type : sqltype {
 
 
 struct schema_pqxx : public schema {
-  pqxx::connection c;
+  // pqxx::connection c;
   map<OID, pg_type*> oid2type;
   map<string, pg_type*> name2type;
 
   virtual std::string quote_name(const std::string &id) {
-    return c.quote_name(id);
+    std::cout << "come to quote_name" << std::endl;
+    return 0;
   }
   schema_pqxx(std::string &conninfo, bool no_catalog);
 };

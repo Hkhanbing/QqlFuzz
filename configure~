@@ -8033,7 +8033,7 @@ fi
 
 
 
-CONFIG_GIT_REVISION=32b215b
+CONFIG_GIT_REVISION=305a4b4-dirty
 
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for sqlite3_open_v2 in -lsqlite3" >&5
@@ -8757,7 +8757,7 @@ do
   --header | --heade | --head | --hea )
     $ac_shift
     case $ac_optarg in
-    *\'*) ac_optarg=`printf "%s\n" "$ac_optarg" | sed "s/'/'\\\\\\\\''/g"` ;;
+    *\'*) clang++ -o otltest -I/opt/ShenTong/drivers/aci/include/ -I. -I./db2-include/inlcude/ -L/opt/ShenTong/drivers/aci/linux64 -L/opt/ShenTong/drivers/odbc/lib -Wl,-rpath-link,/opt/ShenTong/drivers/odbc/lib -lodbc -lpthread -laci otl.cpp -DOTL_ORA11Gac_optarg=`printf "%s\n" "$ac_optarg" | sed "s/'/'\\\\\\\\''/g"` ;;
     esac
     as_fn_append CONFIG_HEADERS " '$ac_optarg'"
     ac_need_defaults=false;;

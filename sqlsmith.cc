@@ -3,14 +3,14 @@
 #include <iostream>
 #include <chrono>
 // my headers injection ##
-#include <unistd.h>
-#include <sys/wait.h>
-#include <pthread.h>
-#include <iostream>
-#include <string>
-#include <atomic>
-#include <cstdio>
-#include <cstring>
+// #include <unistd.h>
+// #include <sys/wait.h>
+// #include <pthread.h>
+// #include <iostream>
+// #include <string>
+// #include <atomic>
+// #include <cstdio>
+// #include <cstring>
 // my headers injection end ##
 
 #ifndef HAVE_BOOST_REGEX
@@ -45,6 +45,7 @@ using boost::regex_match;
 #endif
 
 #include "postgres.hh"
+#include "otl.hh"
 
 using namespace std;
 
@@ -70,89 +71,110 @@ extern "C" void cerr_log_handler(int)
 
 // my function && global variants injection ##
 // 全局变量用于控制循环的运行状态
-std::atomic<bool> running(true);
+// std::atomic<bool> running(true);
 
-char buffer1[0x1000]; // for stdout
-char buffer2[0x1000]; // for stderr
-int outPipe[2]; // 标准输出管道
-int errPipe[2]; // 标准错误管道
-pthread_t outputThread, errorThread;
-// 线程函数：读取子进程的标准输出
-void* readOutputStream(void* arg) {
-    int fd = *static_cast<int*>(arg);
-    FILE* fp = fdopen(fd, "r");
-    if (!fp) {
-        perror("fdopen");
-        return nullptr;
-    }
+// char buffer1[0x1000]; // for stdout
+// char buffer2[0x1000]; // for stderr
+// int outPipe[2]; // 标准输出管道
+// int errPipe[2]; // 标准错误管道
+// pthread_t outputThread, errorThread;
+// // 线程函数：读取子进程的标准输出
+// void* readOutputStream(void* arg) {
+//     int fd = *static_cast<int*>(arg);
+//     FILE* fp = fdopen(fd, "r");
+//     if (!fp) {
+//         perror("fdopen");
+//         return nullptr;
+//     }
 
-    while (running && std::fgets(buffer1, sizeof(buffer1), fp)) {
-        std::cout << buffer1;
-        std::memset(buffer1, 0, sizeof(buffer1)); // 清空缓冲区
-    }
+//     while (running && std::fgets(buffer1, sizeof(buffer1), fp)) {
+//         std::cout << buffer1;
+//         std::memset(buffer1, 0, sizeof(buffer1)); // 清空缓冲区
+//     }
 
-    fclose(fp);
-    return nullptr;
-}
+//     fclose(fp);
+//     return nullptr;
+// }
 
-// 线程函数：读取子进程的标准错误
-void* readErrorStream(void* arg) {
-    int fd = *static_cast<int*>(arg);
-    FILE* fp = fdopen(fd, "r");
-    if (!fp) {
-        perror("fdopen");
-        return nullptr;
-    }
+// // 线程函数：读取子进程的标准错误
+// void* readErrorStream(void* arg) {
+//     int fd = *static_cast<int*>(arg);
+//     FILE* fp = fdopen(fd, "r");
+//     if (!fp) {
+//         perror("fdopen");
+//         return nullptr;
+//     }
 
-    while (running && std::fgets(buffer2, sizeof(buffer2), fp)) {
-        std::cerr << buffer2;
-        std::memset(buffer2, 0, sizeof(buffer2)); // 清空缓冲区
-    }
+//     while (running && std::fgets(buffer2, sizeof(buffer2), fp)) {
+//         std::cerr << buffer2;
+//         std::memset(buffer2, 0, sizeof(buffer2)); // 清空缓冲区
+//     }
 
-    fclose(fp);
-    return nullptr;
-}
+//     fclose(fp);
+//     return nullptr;
+// }
 
-// 执行一个命令并获取其输出
-void executeCommand(const char* cmd, int outPipe[2], int errPipe[2]) {
-    pid_t pid = fork();
-    if (pid == -1) {
-        perror("fork");
-        return;
-    }
+// // 执行一个命令并获取其输出
+// void executeCommand(const char* cmd, int outPipe[2], int errPipe[2]) {
+//     pid_t pid = fork();
+//     if (pid == -1) {
+//         perror("fork");
+//         return;
+//     }
 
-    if (pid == 0) { // 子进程
-        // 关闭父进程中的管道读端
-        close(outPipe[0]);
-        close(errPipe[0]);
+//     if (pid == 0) { // 子进程
+//         // 关闭父进程中的管道读端
+//         close(outPipe[0]);
+//         close(errPipe[0]);
 
-        // 重定向子进程的标准输出和标准错误
-        dup2(outPipe[1], STDOUT_FILENO);
-        dup2(errPipe[1], STDERR_FILENO);
+//         // 重定向子进程的标准输出和标准错误
+//         dup2(outPipe[1], STDOUT_FILENO);
+//         dup2(errPipe[1], STDERR_FILENO);
 
-        // 关闭不再使用的管道写端
-        close(outPipe[1]);
-        close(errPipe[1]);
+//         // 关闭不再使用的管道写端
+//         close(outPipe[1]);
+//         close(errPipe[1]);
 
-        // 执行命令
-        execl("/home/hkbin/Workspace/chaitin_workspace/database_fuzz/QqlFuzz/tool/isql", "isql", "-U", "SYSAUDIT/szoscar55", "-d", "DATEBASE1", "-c", cmd, (char*)nullptr);
-        perror("execl");
-        _exit(1);
-    } else { // 父进程
-        // 关闭子进程中的管道写端
-        close(outPipe[1]);
-        close(errPipe[1]);
+//         // 执行命令
+//         execl("/home/hkbin/Workspace/chaitin_workspace/database_fuzz/QqlFuzz/tool/isql", "isql", "-U", "SYSAUDIT/szoscar55", "-d", "DATEBASE1", "-c", cmd, (char*)nullptr);
+//         perror("execl");
+//         _exit(1);
+//     } else { // 父进程
+//         // 关闭子进程中的管道写端
+//         close(outPipe[1]);
+//         close(errPipe[1]);
 
-        // 等待子进程结束
-        waitpid(pid, nullptr, 0);
-    }
-}
+//         // 等待子进程结束
+//         waitpid(pid, nullptr, 0);
+//     }
+// }
 
 // my function && global variants injection end ##
 
 
 int main(int argc, char *argv[])
 {
+
+
+    char* buffer = new char[0x1000];
+
+    otl_connect* db = init_db();
+
+    rlogin("SYSAUDIT/szoscar55@localhost:2003/DATEBASE1", db);
+
+    char strSql[] = "select version();";
+
+    otl_stream otlCur(1, strSql, *db);
+    // otl_stream ret;
+    // db_exec(db, strSql, &ret);
+
+    otlCur >> buffer;
+
+    cout << buffer << endl;
+
+    cout << "exit" << endl;
+
+
 	cerr << PACKAGE_NAME " " GITREV << endl;
 
 	map<string,string> options;
@@ -219,11 +241,12 @@ int main(int argc, char *argv[])
 				return 1;
 			#endif
 			}
-			else
-				schema = make_shared<schema_pqxx>(options["target"], options.count("exclude-catalog"));
-
+			else{
+				cout << "start to create pqxx_schema" << endl;
+				schema = make_shared<schema_pqxx>(options["target"], options.count("exclude-catalog")); // 这里我填url就行了
+				cout << "finish create pqxx_schema" << endl;
+			}
 			// find attach DBMS end ###
-
 			scope scope;
 			long queries_generated = 0;
 			schema->fill_scope(scope); // 填充生成词
@@ -296,16 +319,16 @@ int main(int argc, char *argv[])
 			
 			// my code1 injection ##
 
-			if (pipe(outPipe) == -1 || pipe(errPipe) == -1) {
-				perror("pipe");
-				return 1;
-			}
-			pthread_create(&outputThread, nullptr, readOutputStream, &outPipe[0]);
-			pthread_create(&errorThread, nullptr, readErrorStream, &errPipe[0]);
+			// if (pipe(outPipe) == -1 || pipe(errPipe) == -1) {
+			// 	perror("pipe");
+			// 	return 1;
+			// }
+			// pthread_create(&outputThread, nullptr, readOutputStream, &outPipe[0]);
+			// pthread_create(&errorThread, nullptr, readErrorStream, &errPipe[0]);
 
 			// 向子进程写入输入并处理交互
-			chdir("/home/hkbin/Workspace/chaitin_workspace/database_fuzz/QqlFuzz/tool");
-			std::string input_line;
+			// chdir("/home/hkbin/Workspace/chaitin_workspace/database_fuzz/QqlFuzz/tool");
+			// std::string input_line;
 
 			// my code1 injection end ##
 
@@ -357,17 +380,18 @@ int main(int argc, char *argv[])
 				}
 				}
 			}
-			catch (const exception &e) {
-				cerr << e.what() << endl;
-				// my code2 injection ##
-			    // 关闭管道
-				close(outPipe[0]);
-				close(errPipe[0]);
-
-				// 等待线程完成
-				pthread_join(outputThread, nullptr);
-				pthread_join(errorThread, nullptr);
-				// my code2 injection end ##
-				return 1;
-			}
+	catch (const exception &e) {
+		cerr << e.what() << endl;
+		cout << "error found!" << endl;
+		// my code2 injection ##
+	    // 关闭管道
+		// close(outPipe[0]);
+		// close(errPipe[0])
+		// 等待线程完成
+		// pthread_join(outputThread, nullptr);
+		// pthread_join(errorThread, nullptr);
+		// my code2 injection end ##
+		return 1;
+	}
+	cout << "all finished " << endl;
 }

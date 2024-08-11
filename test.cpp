@@ -1,21 +1,12 @@
 #include "ProcessHandler.h"
+#include "st.hh"
 #include <iostream>
 
 int main() {
-    ProcessHandler handler;
-    handler.start("/home/hkbin/Workspace/chaitin_workspace/database_fuzz/QqlFuzz/tool");
 
-    std::string input_line;
-    while (true) {
-        std::cout << "Enter command: ";
-        std::getline(std::cin, input_line);
-        if (input_line.empty()) {
-            handler.stop();
-            break;
-        }
-        input_line += "\n";
-        handler.executeCommand(input_line);
-    }
+    shared_ptr<schema> schema;
+    schema = std::make_shared<schema_shentong>("DATEBASE1", "True");
+
 
     return 0;
 }
